@@ -9,15 +9,20 @@ import (
 )
 
 var (
-	btnRemote      = tele.Btn{Unique: "type_remote", Text: "🏠 Удалёнка"}
-	btnSick        = tele.Btn{Unique: "type_sick", Text: "🤒 Больничный"}
-	btnDailyShort  = tele.Btn{Unique: "type_daily", Text: "📅 Дэйлик"}
-	btnOnline      = tele.Btn{Unique: "mode_online", Text: "💻 Онлайн"}
-	btnOffline     = tele.Btn{Unique: "mode_offline", Text: "🏢 Офлайн"}
-	btnConfirmSend = tele.Btn{Unique: "confirm_send", Text: "✅ Отправить"}
-	btnEditTime    = tele.Btn{Unique: "edit_time", Text: "✏️ Изменить время"}
-	btnEditLoc     = tele.Btn{Unique: "edit_location", Text: "✏️ Изменить адрес/ссылку"}
-	btnUseLastLoc  = tele.Btn{Unique: "use_last_loc", Text: "♻️ Использовать прошлый"}
+	btnRemote            = tele.Btn{Unique: "type_remote", Text: "🏠 Удалёнка"}
+	btnSick              = tele.Btn{Unique: "type_sick", Text: "🤒 Больничный"}
+	btnDailyShort        = tele.Btn{Unique: "type_daily", Text: "📅 Дэйлик"}
+	btnOnline            = tele.Btn{Unique: "mode_online", Text: "💻 Онлайн"}
+	btnOffline           = tele.Btn{Unique: "mode_offline", Text: "🏢 Офлайн"}
+	btnConfirmSend       = tele.Btn{Unique: "confirm_send", Text: "✅ Отправить"}
+	btnEditTime          = tele.Btn{Unique: "edit_time", Text: "✏️ Изменить время"}
+	btnEditLoc           = tele.Btn{Unique: "edit_location", Text: "✏️ Изменить адрес/ссылку"}
+	btnUseLastLoc        = tele.Btn{Unique: "use_last_loc", Text: "♻️ Использовать прошлый"}
+	btnConfirmDate       = tele.Btn{Unique: "confirm_date", Text: "✅ Подтвердить"}
+	btnChangeDate        = tele.Btn{Unique: "change_date", Text: "✏️ Изменить дату"}
+	btnCancelRequest     = tele.Btn{Unique: "cancel_request", Text: "❌ Отменить"}
+	btnCancelLastRequest = tele.Btn{Unique: "cancel_last_request", Text: "❌ Отменить заявку"}
+	btnCancelLastDaily   = tele.Btn{Unique: "cancel_last_daily", Text: "❌ Отменить дэйлик"}
 )
 
 func requestTypeKeyboard(isPM bool) *tele.ReplyMarkup {
@@ -53,6 +58,27 @@ func locationKeyboard(hasLast bool) *tele.ReplyMarkup {
 	if hasLast {
 		kb.Inline(kb.Row(btnUseLastLoc))
 	}
+	return kb
+}
+
+func confirmDateKeyboard() *tele.ReplyMarkup {
+	kb := &tele.ReplyMarkup{}
+	kb.Inline(
+		kb.Row(btnConfirmDate),
+		kb.Row(btnChangeDate, btnCancelRequest),
+	)
+	return kb
+}
+
+func cancelLastRequestKeyboard() *tele.ReplyMarkup {
+	kb := &tele.ReplyMarkup{}
+	kb.Inline(kb.Row(btnCancelLastRequest))
+	return kb
+}
+
+func cancelLastDailyKeyboard() *tele.ReplyMarkup {
+	kb := &tele.ReplyMarkup{}
+	kb.Inline(kb.Row(btnCancelLastDaily))
 	return kb
 }
 

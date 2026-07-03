@@ -3,11 +3,11 @@ package bot
 import (
 	"context"
 	"fmt"
+	"time"
 
 	tele "gopkg.in/telebot.v3"
 
 	"remote-bot/internal/domain"
-	"time"
 )
 
 func (b *Bot) handleDaily(c tele.Context) error {
@@ -194,7 +194,22 @@ func (b *Bot) handleBtnConfirmSend(c tele.Context) error {
 		return fmt.Errorf("notify group: %w", err)
 	}
 
-	return c.Send("✅ Уведомление отправлено команде!")
+	return c.Send("✅ Уведомление отправлено команде!", cancelLastDailyKeyboard())
+}
+
+func (b *Bot) handleBtnCancelLastDaily(c tele.Context) error {
+	_ = c.Edit(c.Message().Text)
+	sender := c.Sender()
+	fullName := sender.FirstName
+	if sender.LastName != "" {
+		fullName += " " + sender.LastName
+	}
+	daily, err := b.dailies.DeleteLastByCreator(context.Background(), sender.ID)
+	if err != nil {
+		return c.Send("❌ Не удалось отменить дэйлик.")
+	}
+	_ = b.notifier.NotifyGroupCancelDaily(fullName, sender.Username, *daily)
+	return c.Send("✅ Дэйлик отменён. Команда получила уведомление.")
 }
 
 func (b *Bot) handleBtnEditTime(c tele.Context) error {

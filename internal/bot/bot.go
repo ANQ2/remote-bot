@@ -58,11 +58,15 @@ func (b *Bot) Stop() {
 }
 
 func (b *Bot) registerHandlers() {
-	b.tele.Handle("/start", b.handleStart)
-	b.tele.Handle("/request", b.handleRequest)
-	b.tele.Handle("/cancel", b.handleCancel)
-	b.tele.Handle("/myid", b.handleMyID)
-	b.tele.Handle("/daily", b.handleDaily, onlyPM(b.cfg))
+	private := onlyPrivate()
+
+	b.tele.Handle("/start", b.handleStart, private)
+	b.tele.Handle("/request", b.handleRequest, private)
+	b.tele.Handle("/cancel", b.handleCancel, private)
+	b.tele.Handle("/myid", b.handleMyID, private)
+	b.tele.Handle("/logs", b.handleLogs, private)
+	b.tele.Handle("/setchat", b.handleSetChat, private)
+	b.tele.Handle("/daily", b.handleDaily, private, onlyPM(b.cfg))
 
 	b.tele.Handle(&btnRemote, b.handleBtnRemote)
 	b.tele.Handle(&btnSick, b.handleBtnSick)
@@ -73,15 +77,17 @@ func (b *Bot) registerHandlers() {
 	b.tele.Handle(&btnEditTime, b.handleBtnEditTime)
 	b.tele.Handle(&btnEditLoc, b.handleBtnEditLocation)
 	b.tele.Handle(&btnUseLastLoc, b.handleBtnUseLastLoc)
+	b.tele.Handle(&btnConfirmDate, b.handleBtnConfirmDate)
+	b.tele.Handle(&btnChangeDate, b.handleBtnChangeDate)
+	b.tele.Handle(&btnCancelRequest, b.handleBtnCancelRequest)
+	b.tele.Handle(&btnCancelLastRequest, b.handleBtnCancelLastRequest)
+	b.tele.Handle(&btnCancelLastDaily, b.handleBtnCancelLastDaily)
 
-	// Регистрируем кнопки дат на 2 недели вперёд
 	b.registerDateButtons()
-
-	// Регистрируем кнопки времени с 09:00 до 18:00
 	b.registerTimeButtons()
 
 	b.tele.Handle(tele.OnAddedToGroup, b.handleAddedToGroup)
-	b.tele.Handle(tele.OnText, b.handleText)
+	b.tele.Handle(tele.OnText, b.handleText, private)
 }
 
 func (b *Bot) registerDateButtons() {
@@ -92,7 +98,6 @@ func (b *Bot) registerDateButtons() {
 	}
 	monday := now.AddDate(0, 0, -(weekday - 1))
 	monday = time.Date(monday.Year(), monday.Month(), monday.Day(), 0, 0, 0, 0, monday.Location())
-
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	for week := 0; week < 2; week++ {

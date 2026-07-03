@@ -87,3 +87,17 @@ func scanRequest(row pgx.Row) (*domain.Request, error) {
 	}
 	return &req, nil
 }
+
+func (r *RequestRepo) DeleteLastByEmployee(ctx context.Context, employeeID int64) (*domain.Request, error) {
+	row := r.pool.QueryRow(ctx, `
+		DELETE FROM requests
+		WHERE id = (
+			SELECT id FROM requests
+			WHERE employee_id = $1
+			ORDER BY created_at DESC
+			LIMIT 1
+		)
+		RETURNING id, employee_id, type, date, date_from, date_to, notified, created_at
+	`, employeeID)
+	return scanRequest(row)
+}

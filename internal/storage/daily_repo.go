@@ -73,6 +73,20 @@ func (r *DailyRepo) MarkNotified(ctx context.Context, id int64) error {
 	return nil
 }
 
+func (r *DailyRepo) DeleteLastByCreator(ctx context.Context, createdBy int64) (*domain.Daily, error) {
+	row := r.pool.QueryRow(ctx, `
+		DELETE FROM dailies
+		WHERE id = (
+			SELECT id FROM dailies
+			WHERE created_by = $1
+			ORDER BY created_at DESC
+			LIMIT 1
+		)
+		RETURNING id, date, "time", mode, location, created_by, notified, created_at
+	`, createdBy)
+	return scanDaily(row)
+}
+
 func scanDaily(row pgx.Row) (*domain.Daily, error) {
 	var d domain.Daily
 	err := row.Scan(&d.ID, &d.Date, &d.Time, &d.Mode, &d.Location, &d.CreatedBy, &d.Notified, &d.CreatedAt)

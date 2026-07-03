@@ -43,14 +43,14 @@ func main() {
 		DialogStates: storage.NewDialogStateRepo(pool),
 	}
 
-	n := notifier.New(teleBot, cfg.GroupChatID)
+	n := notifier.New(teleBot, cfg)
 
 	b, err := bot.New(cfg, repos, n, teleBot)
 	if err != nil {
 		log.Fatalf("бот: %v", err)
 	}
 
-	sched := scheduler.New(repos.Requests, repos.Dailies, n)
+	sched := scheduler.New(repos.Requests, repos.Dailies, n, cfg.AdminID)
 	if err := sched.Start(); err != nil {
 		log.Fatalf("планировщик: %v", err)
 	}

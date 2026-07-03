@@ -3,19 +3,21 @@ package notifier
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tele "gopkg.in/telebot.v3"
 
+	"remote-bot/internal/config"
 	"remote-bot/internal/domain"
 )
 
 type Notifier struct {
-	bot         *tele.Bot
-	groupChatID int64
+	bot *tele.Bot
+	cfg *config.Config
 }
 
-func New(bot *tele.Bot, groupChatID int64) *Notifier {
-	return &Notifier{bot: bot, groupChatID: groupChatID}
+func New(bot *tele.Bot, cfg *config.Config) *Notifier {
+	return &Notifier{bot: bot, cfg: cfg}
 }
 
 func (n *Notifier) NotifyGroupRequests(requests []domain.RequestWithEmployee) error {
@@ -63,13 +65,49 @@ func (n *Notifier) NotifyGroupRequests(requests []domain.RequestWithEmployee) er
 	return n.sendToGroup(strings.TrimSpace(sb.String()))
 }
 
+func (n *Notifier) NotifyGroupRemoteRequest(emp domain.RequestWithEmployee) error {
+	name := formatName(emp)
+	text := fmt.Sprintf("🏠 %s — %s просится на удалёнку", name, emp.Date.Format("02.01.2006"))
+	return n.sendToGroup(text)
+}
+
 func (n *Notifier) NotifyGroupDaily(d domain.Daily) error {
 	var text string
 	if d.Mode == domain.DailyOnline {
-		text = fmt.Sprintf("📅 Дэйлик онлайн 💻\nВремя: %s\nСсылка: %s", d.Time, d.Location)
+		text = fmt.Sprintf("📅 Дэйлик онлайн 💻\nДата: %s\nВремя: %s\nСсылка: %s",
+			d.Date.Format("02.01.2006"), d.Time, d.Location)
 	} else {
-		text = fmt.Sprintf("📅 Дэйлик офлайн 🏢\nВремя: %s\nАдрес: %s", d.Time, d.Location)
+		text = fmt.Sprintf("📅 Дэйлик офлайн 🏢\nДата: %s\nВремя: %s\nАдрес: %s",
+			d.Date.Format("02.01.2006"), d.Time, d.Location)
 	}
+	return n.sendToGroup(text)
+}
+
+func (n *Notifier) NotifyGroupCancelRequest(fullName, username string, reqType domain.RequestType, date time.Time) error {
+	var name string
+	if username != "" {
+		name = fmt.Sprintf("%s (@%s)", fullName, username)
+	} else {
+		name = fullName
+	}
+	var typeLabel string
+	if reqType == domain.RequestRemote {
+		typeLabel = "удалёнку"
+	} else {
+		typeLabel = "больничный"
+	}
+	text := fmt.Sprintf("🚫 %s отменил заявку на %s — %s", name, typeLabel, date.Format("02.01.2006"))
+	return n.sendToGroup(text)
+}
+
+func (n *Notifier) NotifyGroupCancelDaily(fullName, username string, d domain.Daily) error {
+	var name string
+	if username != "" {
+		name = fmt.Sprintf("%s (@%s)", fullName, username)
+	} else {
+		name = fullName
+	}
+	text := fmt.Sprintf("🚫 %s отменил дэйлик %s в %s", name, d.Date.Format("02.01.2006"), d.Time)
 	return n.sendToGroup(text)
 }
 
@@ -83,7 +121,7 @@ func (n *Notifier) SendToUser(telegramID int64, text string) error {
 }
 
 func (n *Notifier) sendToGroup(text string) error {
-	chat := &tele.Chat{ID: n.groupChatID}
+	chat := &tele.Chat{ID: n.cfg.GetGroupChatID()}
 	_, err := n.bot.Send(chat, text)
 	if err != nil {
 		return fmt.Errorf("send to group: %w", err)
